@@ -1,6 +1,7 @@
 import type { AppState, Executive } from './model';
 import { FREE_AI_REQUESTS } from './model';
 import { dueLabel, isOverdue, parseLocal, todayKey } from './dates';
+import { IN_PREVIEW } from './env';
 
 export type AlertKind = 'overdue' | 'due' | 'report' | 'learned' | 'plan';
 export type AlertItem = { id: string; kind: AlertKind; title: string; body: string; href: string; at: number };
@@ -25,7 +26,7 @@ export function deriveAlerts(s: AppState, exec: Executive | undefined, now: Date
   exec.learned.slice(-3).forEach((l) => {
     out.push({ id: `learned:${l.id}`, kind: 'learned', title: `Opaad will remember: ${l.text}`, body: 'Remove it from the Executive page if it is wrong.', href: '/executive', at: new Date(l.createdAt).getTime() });
   });
-  if (s.usage.plan === 'free' && !s.settings.ownKey && s.usage.aiRequests > 0) {
+  if (!IN_PREVIEW && s.usage.plan === 'free' && !s.settings.ownKey && s.usage.aiRequests > 0) {
     const left = Math.max(0, FREE_AI_REQUESTS - s.usage.aiRequests);
     out.push({ id: `plan:${s.usage.aiRequests}`, kind: 'plan', title: `${left} of ${FREE_AI_REQUESTS} free AI requests left`, body: 'Tasks, notes, reminders and reports stay free.', href: '/settings', at: now.getTime() - 1 });
   }

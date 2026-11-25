@@ -1,6 +1,7 @@
 import type { Action, AppState, ChatMessage, Draft, Executive, Item, ItemType, PlanBlock, Report } from '@/lib/model';
 import { MAX_EXECUTIVES } from '@/lib/model';
 import { todayKey, uid } from '@/lib/dates';
+import { IN_PREVIEW } from '@/lib/env';
 
 export function initialState(): AppState {
   return {
@@ -216,6 +217,7 @@ export function applyActions(s: AppState, execId: string, actions: Action[]): Ap
 }
 
 export function aiRequestsLeft(s: AppState, freeLimit: number): number {
-  if (s.usage.plan === 'pro' || s.settings.ownKey) return Infinity;
+  // The claude.ai preview is for testing: Claude answers there, so no free-plan cap.
+  if (IN_PREVIEW || s.usage.plan === 'pro' || s.settings.ownKey) return Infinity;
   return Math.max(0, freeLimit - s.usage.aiRequests);
 }

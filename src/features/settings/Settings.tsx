@@ -48,9 +48,8 @@ export function Settings() {
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-semibold">Plan</h2>
           <p className="text-sm leading-relaxed text-ink-2">
-            {left === Infinity ? 'Unlimited AI requests.' : `Free plan: ${left} of ${FREE_AI_REQUESTS} AI requests left. Tasks, notes, reminders and reports are free without limits.`} The paid plan with unlimited AI is on the way.
+            {IN_PREVIEW ? 'Testing preview: AI requests are unlimited here, answered by Claude. The released app uses OpenRouter, with 3 free requests on the free plan.' : left === Infinity ? 'Unlimited AI requests.' : `Free plan: ${left} of ${FREE_AI_REQUESTS} AI requests left. Tasks, notes, reminders and reports are free without limits.`} The paid plan with unlimited AI is on the way.
           </p>
-          {IN_PREVIEW && s.usage.aiRequests > 0 && <Button variant="secondary" className="self-start" onClick={() => setState((st) => ({ ...st, usage: { ...st.usage, aiRequests: 0 } }))}>Reset free requests (preview only)</Button>}
           {!IN_PREVIEW && <details className="rounded-card border border-line p-3">
             <summary className="cursor-pointer text-sm font-medium">Testing Opaad? Use your own OpenRouter key</summary>
             <form className="mt-3 flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); setState((st) => ({ ...st, settings: { ...st.settings, ownKey: key.trim() } })); toast(key.trim() ? 'Key saved on this device' : 'Key removed'); }}>
