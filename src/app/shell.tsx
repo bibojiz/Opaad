@@ -64,7 +64,7 @@ function NavList({ rail, onNavigate }: { rail?: boolean; onNavigate?: () => void
             end={it.to === '/'}
             onClick={onNavigate}
             title={rail ? it.label : undefined}
-            className={({ isActive }) => `flex h-12 items-center gap-3 rounded-card px-3 text-base ${rail ? 'justify-center' : ''} ${isActive ? 'bg-subtle font-semibold' : 'font-medium hover:bg-subtle'}`}
+            className={({ isActive }) => `flex h-12 items-center gap-3 rounded-card px-3 text-base ${rail ? 'justify-center' : ''} ${isActive ? 'bg-lime font-semibold' : 'font-medium hover:bg-subtle'}`}
           >
             <it.icon size={22} strokeWidth={1.7} aria-hidden />
             {!rail && <span className="flex-1">{it.label}</span>}
