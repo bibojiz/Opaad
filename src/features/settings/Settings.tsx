@@ -8,6 +8,7 @@ import { Button, Field, inputCls } from '@/components/ui';
 import { Sheet, useToast } from '@/components/overlays';
 import { FREE_AI_REQUESTS } from '@/lib/model';
 import { notificationSupport, requestNotifications } from '@/lib/device';
+import { CalendarSettings } from '@/features/calendar/CalendarSettings';
 
 export function Settings() {
   const s = useApp();
@@ -45,6 +46,8 @@ export function Settings() {
           {perm === 'default' && <Button variant="secondary" className="self-start" onClick={async () => { const p = await requestNotifications(); setState((st) => ({ ...st, settings: { ...st.settings, notifications: p } })); }}>Turn on reminders</Button>}
         </section>
 
+        <CalendarSettings />
+
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-semibold">Plan</h2>
           <p className="text-sm leading-relaxed text-ink-2">
@@ -62,7 +65,7 @@ export function Settings() {
 
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-semibold">Your data</h2>
-          <p className="text-sm leading-relaxed text-ink-2">Everything is stored in this browser on this device. Opaad has no copy. Clearing your browser data deletes it, so export a copy now and then.</p>
+          <p className="text-sm leading-relaxed text-ink-2">Everything is stored in this browser on this device. Opaad keeps no copy. Clearing your browser data deletes it, so export a copy now and then. When you ask Opaad something, your open items and any calendar events go with the question to the AI model, routed only to providers that don't store or train on your data.</p>
           <div className="flex flex-wrap gap-2">
             {!IN_PREVIEW && <Button variant="secondary" onClick={download}>Export a copy</Button>}
             <Button variant="danger" onClick={() => setWipe(true)}>Delete all data</Button>

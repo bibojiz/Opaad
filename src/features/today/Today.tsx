@@ -7,6 +7,7 @@ import { AlertsBell, PageHeader, useShell } from '@/app/shell';
 import { OpaadMark, SectionTitle } from '@/components/ui';
 import { QuickAdd, type AddKind, type QuickAddRequest } from '@/features/tasks/QuickAdd';
 import { ItemRow } from '@/features/tasks/ItemRow';
+import { CalendarCard } from '@/features/calendar/CalendarCard';
 import { briefFor } from '@/lib/report';
 import { dueLabel, greeting, isOverdue, todayKey, weekStrip } from '@/lib/dates';
 
@@ -78,7 +79,9 @@ export function Today() {
           )}
         </section>
 
-        <button type="button" onClick={() => openAsk({ prompt: 'Plan my day around what is open, with buffers between demanding blocks.', send: true })} className="flex items-center gap-3 rounded-field bg-lime p-3 text-left">
+        <CalendarCard exec={exec} />
+
+        <button type="button" onClick={() => openAsk({ prompt: 'Plan my day around my meetings and what is open, with buffers between demanding blocks.', send: true })} className="flex items-center gap-3 rounded-field bg-lime p-3 text-left">
           <OpaadMark size={22} />
           <span className="flex flex-1 flex-col gap-1">
             <span className="text-base font-semibold">Plan my day</span>

@@ -116,6 +116,7 @@ export const ActionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('draft_message'), to: z.string().min(1).max(80), channel: z.enum(['whatsapp', 'email']), subject: z.string().max(160).optional(), body: z.string().min(1).max(4000) }),
   z.object({ kind: z.literal('write_report'), text: z.string().min(1).max(6000) }),
   z.object({ kind: z.literal('remember_preference'), text: z.string().min(1).max(200) }),
+  z.object({ kind: z.literal('add_event'), title: z.string().min(1).max(200), start: LocalDateTime, end: LocalDateTime, location: z.string().max(200).optional(), notes: z.string().max(1000).optional() }),
 ]);
 export type Action = z.infer<typeof ActionSchema>;
 
@@ -144,9 +145,20 @@ export type Profile = {
   createdAt: string;
 };
 
+export type CalEvent = { id: string; title: string; start: string; end: string; allDay: boolean; location: string; link: string };
+
+export type GoogleSettings = {
+  connected: boolean;
+  email: string;
+  calendars: { id: string; name: string; primary: boolean; canWrite: boolean }[];
+  /** Which Google calendar belongs to which executive. */
+  execCalendar: Record<string, string>;
+};
+
 export type Settings = {
   notifications: 'default' | 'granted' | 'denied' | 'unsupported';
   ownKey: string;
+  google: GoogleSettings;
 };
 
 export type AppState = {
@@ -162,4 +174,6 @@ export type AppState = {
   usage: { aiRequests: number; plan: 'free' | 'pro' };
   readAlerts: string[];
   settings: Settings;
+  /** Last fetched calendar events per executive, kept so Today still shows them offline. */
+  events: Record<string, { fetchedAt: string; items: CalEvent[] }>;
 };

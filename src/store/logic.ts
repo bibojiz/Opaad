@@ -1,4 +1,4 @@
-import type { Action, AppState, ChatMessage, Draft, Executive, Item, ItemType, PlanBlock, Report } from '@/lib/model';
+import type { Action, AppState, CalEvent, ChatMessage, Draft, Executive, GoogleSettings, Item, ItemType, PlanBlock, Report } from '@/lib/model';
 import { MAX_EXECUTIVES } from '@/lib/model';
 import { todayKey, uid } from '@/lib/dates';
 import { IN_PREVIEW } from '@/lib/env';
@@ -16,7 +16,8 @@ export function initialState(): AppState {
     chats: {},
     usage: { aiRequests: 0, plan: 'free' },
     readAlerts: [],
-    settings: { notifications: 'default', ownKey: '' },
+    settings: { notifications: 'default', ownKey: '', google: { connected: false, email: '', calendars: [], execCalendar: {} } },
+    events: {},
   };
 }
 
@@ -66,6 +67,8 @@ export function removeExecutive(s: AppState, id: string): AppState {
     drafts: s.drafts.filter((d) => d.execId !== id),
     reports: s.reports.filter((r) => r.execId !== id),
     chats,
+    events: Object.fromEntries(Object.entries(s.events).filter(([k]) => k !== id)),
+    settings: { ...s.settings, google: { ...s.settings.google, execCalendar: Object.fromEntries(Object.entries(s.settings.google.execCalendar).filter(([k]) => k !== id)) } },
   };
 }
 
@@ -204,6 +207,14 @@ export function applyActions(s: AppState, execId: string, actions: Action[]): Ap
         summary.push("Tonight's report drafted");
         break;
       }
+      case 'add_event': {
+        // Reached only when the calendar can't take it (not connected, or read-only): keep it as a reminder at the start time.
+        const it = makeItem(execId, 'reminder', a.title, { due: a.start, body: [a.location, a.notes].filter(Boolean).join('\n'), source: 'agent' });
+        state = addItem(state, it);
+        createdIds.push(it.id);
+        summary.push(`Reminder: ${a.title}`);
+        break;
+      }
       case 'remember_preference': {
         const r = addLearned(state, execId, a.text, 'From your request');
         state = r.state;
@@ -220,4 +231,38 @@ export function aiRequestsLeft(s: AppState, freeLimit: number): number {
   // The claude.ai preview is for testing: Claude answers there, so no free-plan cap.
   if (IN_PREVIEW || s.usage.plan === 'pro' || s.settings.ownKey) return Infinity;
   return Math.max(0, freeLimit - s.usage.aiRequests);
+}
+
+/* ---------- Google Calendar ---------- */
+
+export function setGoogle(s: AppState, patch: Partial<GoogleSettings>): AppState {
+  return { ...s, settings: { ...s.settings, google: { ...s.settings.google, ...patch } } };
+}
+
+/** The calendar Opaad reads and writes for this executive: the one picked in Settings, else the assistant's primary. */
+export function calendarFor(s: AppState, execId: string): GoogleSettings['calendars'][number] | null {
+  const g = s.settings.google;
+  if (!g.connected) return null;
+  const id = g.execCalendar[execId];
+  return g.calendars.find((c) => c.id === id) ?? g.calendars.find((c) => c.primary) ?? null;
+}
+
+export function setEvents(s: AppState, execId: string, items: CalEvent[], fetchedAt: string = new Date().toISOString()): AppState {
+  return { ...s, events: { ...s.events, [execId]: { fetchedAt, items } } };
+}
+
+export function addEventLocal(s: AppState, execId: string, ev: CalEvent): AppState {
+  const cur = s.events[execId];
+  const items = [...(cur?.items ?? []).filter((e) => e.id !== ev.id), ev].sort((a, b) => a.start.localeCompare(b.start));
+  return { ...s, events: { ...s.events, [execId]: { fetchedAt: cur?.fetchedAt ?? new Date().toISOString(), items } } };
+}
+
+export function removeEventLocal(s: AppState, execId: string, eventId: string): AppState {
+  const cur = s.events[execId];
+  if (!cur) return s;
+  return { ...s, events: { ...s.events, [execId]: { ...cur, items: cur.items.filter((e) => e.id !== eventId) } } };
+}
+
+export function disconnectGoogle(s: AppState): AppState {
+  return { ...s, events: {}, settings: { ...s.settings, google: { connected: false, email: '', calendars: [], execCalendar: {} } } };
 }

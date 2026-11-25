@@ -1,6 +1,7 @@
 import { ActionSchema, AgentResponseSchema, type Action, type AppState, type ChatMessage, type Executive } from './model';
-import { dueLabel, isOverdue, isToday, todayKey, toLocalDateTime } from './dates';
+import { dueLabel, formatTime, isOverdue, isToday, parseLocal, todayKey, toLocalDateTime } from './dates';
 import { IN_PREVIEW } from './env';
+import { calendarFor } from '@/store/logic';
 import { TOOLS, fallbackReply, systemPrompt, type AgentContext } from './agent-prompt';
 
 export function buildContext(s: AppState, exec: Executive, now: Date = new Date()): AgentContext {
@@ -28,7 +29,23 @@ export function buildContext(s: AppState, exec: Executive, now: Date = new Date(
     doneToday: mine.filter((i) => i.done && i.doneAt && todayKey(new Date(i.doneAt)) === todayKey(now)).map((i) => i.title).slice(0, 40),
     plan: s.plan.filter((b) => b.execId === exec.id && b.date === todayKey(now)).map((b) => `${b.start}-${b.end} ${b.title}`).slice(0, 20),
     notesToRaise: mine.filter((i) => i.type === 'note' && i.raiseWithExec && !i.done).map((i) => i.title).slice(0, 20),
+    calendar: calendarContext(s, exec.id, now),
   };
+}
+
+function calendarContext(s: AppState, execId: string, now: Date): AgentContext['calendar'] {
+  const cal = calendarFor(s, execId);
+  if (!cal) return null;
+  const today = todayKey(now);
+  const events = (s.events[execId]?.items ?? [])
+    .filter((e) => e.start.slice(0, 10) >= today)
+    .slice(0, 30)
+    .map((e) => {
+      const day = e.start.startsWith(today) ? 'Today' : 'Tomorrow';
+      const when = e.allDay ? 'all day' : `${e.start.slice(11)}-${e.end.slice(11)}`;
+      return `${day} ${when} ${e.title}${e.location ? ` (${e.location})` : ''}`.slice(0, 200);
+    });
+  return { name: cal.name.slice(0, 80), canWrite: cal.canWrite, events };
 }
 
 export type AgentReply = { reply: string; actions: Action[] };
@@ -88,6 +105,11 @@ export function describeAction(a: Action): { label: string; detail: string } {
       return { label: `${a.channel === 'whatsapp' ? 'WhatsApp' : 'Email'} draft`, detail: `To ${a.to}` };
     case 'write_report':
       return { label: "Tonight's report", detail: a.text.split('\n').find((l) => l.trim())?.slice(0, 90) ?? '' };
+    case 'add_event':
+      {
+      const end = parseLocal(a.end);
+      return { label: 'Calendar event', detail: `${a.title} · ${dueLabel(a.start)}${end ? `–${formatTime(end)}` : ''}${a.location ? ` · ${a.location}` : ''}` };
+    }
     case 'remember_preference':
       return { label: 'Remember', detail: a.text };
   }

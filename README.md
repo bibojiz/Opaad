@@ -41,6 +41,19 @@ npm run build:preview  # the claude.ai preview build (Claude answers instead of 
 2. In Project Settings → Environment Variables add `OPENROUTER_API_KEY` (from openrouter.ai/keys). In OpenRouter's privacy settings, turn off training on your data.
 3. Deploy. `GET /api/agent` returns `{ "configured": true }` when the key is set.
 
+## Google Calendar connector
+
+The assistant connects their own Google account; calendars their executives share with them appear in Settings, where they pick one per executive. Today shows that calendar's meetings, the agent sees today's and tomorrow's events, and an event the agent proposes is written to Google only after the assistant approves it (Undo deletes it). The access token stays in browser memory for about an hour; nothing about it is stored.
+
+Setup, once:
+1. Google Cloud console: create a project and enable the **Google Calendar API**.
+2. **Google Auth Platform → Branding / Audience**: app name Opaad, your support email, audience **External**, status **Testing**. Add each tester's Google address under **Test users** (up to 100 while testing).
+3. **Data access**: add the scopes `calendar.calendarlist.readonly` and `calendar.events`.
+4. **Clients → Create client → Web application**. Authorized JavaScript origins: `https://opaad.vercel.app` and `http://localhost:5173`. No redirect URI is needed.
+5. Copy the client ID into Vercel as `VITE_GOOGLE_CLIENT_ID` (all environments) and redeploy. It is public by design; there is no client secret in this flow.
+
+Before opening to everyone, Google must verify the app because `calendar.events` is a sensitive scope: a privacy policy on the Opaad domain, a homepage, and a short demo video.
+
 ## How the agent stays safe
 
 - The model only **proposes** actions as tool calls. The server validates them with Zod and drops anything malformed; the app runs nothing until the assistant taps Approve, and every change can be undone.

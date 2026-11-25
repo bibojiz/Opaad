@@ -166,7 +166,7 @@ export function Onboarding() {
         <Step title="What Opaad sees" body={`You handle private things for ${who}. Here is how Opaad handles them.`} onNext={next} canNext nextLabel="I understand">
           <ul className="flex flex-col gap-4">
             {[
-              { I: EyeOff, t: 'Only what you type', b: 'Opaad never reads your WhatsApp, email or calendar.' },
+              { I: EyeOff, t: 'Only what you allow', b: 'Opaad reads what you type, and a calendar only if you connect one. It never reads your WhatsApp or email.' },
               { I: Send, t: 'Nothing goes out without you', b: 'Every draft waits for you to check, copy and send. Every change waits for your approval.' },
               { I: Lock, t: 'Kept on this device', b: 'Your tasks, notes and files stay in this browser. When you ask Opaad, that request goes to our AI provider with data collection switched off.' },
               { I: Trash2, t: 'Yours to delete', b: 'Remove an executive and everything about them goes too. Settings can wipe it all.' },

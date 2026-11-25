@@ -1,32 +1,73 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Copy, Mail } from 'lucide-react';
-import { setState } from '@/store/store';
-import { applyActions, removeItems } from '@/store/logic';
+import { getState, setState, useApp } from '@/store/store';
+import { addEventLocal, applyActions, calendarFor, removeEventLocal, removeItems } from '@/store/logic';
 import { describeAction } from '@/lib/agent';
 import { copyText, openEmail, shareToWhatsApp } from '@/lib/device';
+import { calendarAvailable, createEvent, deleteEvent } from '@/lib/gcal';
 import type { Action, ChatMessage } from '@/lib/model';
 import { useToast } from '@/components/overlays';
+import { calendarMessage, ensureToken } from '@/features/calendar/calendar';
+
+type EventAction = Extract<Action, { kind: 'add_event' }>;
 
 /** "Opaad wants to…": nothing changes until the assistant approves. */
 export function ActionCard({ message, execId, onApplied }: { message: ChatMessage; execId: string; onApplied: (ids: string[]) => void }) {
   const actions = message.actions ?? [];
   const [picked, setPicked] = useState<boolean[]>(() => actions.map(() => true));
   const [dismissed, setDismissed] = useState(message.actionState === 'dismissed');
+  const [busy, setBusy] = useState(false);
   const toast = useToast();
+  const s = useApp();
   const applied = message.actionState === 'applied';
   const count = picked.filter(Boolean).length;
+  const cal = calendarFor(s, execId);
+  const calendarReady = !!cal?.canWrite && calendarAvailable();
+  const eventNote = calendarReady ? `Adds to ${cal.name}` : cal ? `${cal.name} is view only, so this becomes a reminder` : 'No calendar connected, so this becomes a reminder';
 
-  const approve = () => {
+  const approve = async () => {
+    if (busy) return;
     const chosen = actions.filter((_, i) => picked[i]);
+    const events = chosen.filter((a): a is EventAction => a.kind === 'add_event');
+    let local: Action[] = chosen.filter((a) => a.kind !== 'add_event');
+    const pushed: { calendarId: string; id: string }[] = [];
+    let note = '';
+    const target = calendarFor(getState(), execId);
+    if (events.length && target?.canWrite && calendarAvailable()) {
+      setBusy(true);
+      try {
+        await ensureToken();
+        for (const ev of events) {
+          const created = await createEvent(target.id, ev);
+          pushed.push({ calendarId: target.id, id: created.id });
+          setState((st) => addEventLocal(st, execId, created));
+        }
+      } catch (err) {
+        const rest = events.slice(pushed.length);
+        local = [...local, ...rest];
+        note = `${calendarMessage(err)} Saved as ${rest.length > 1 ? 'reminders' : 'a reminder'} instead.`;
+      } finally {
+        setBusy(false);
+      }
+    } else {
+      local = [...local, ...events];
+    }
     let ids: string[] = [];
     setState((st) => {
-      const r = applyActions(st, execId, chosen);
+      const r = applyActions(st, execId, local);
       ids = r.createdIds;
       return r.state;
     });
     onApplied(ids);
-    toast(`${chosen.length} change${chosen.length > 1 ? 's' : ''} made`, () => setState((st) => removeItems(st, ids)));
+    const done = `${chosen.length} change${chosen.length > 1 ? 's' : ''} made${pushed.length ? `, ${pushed.length} on the calendar` : ''}`;
+    toast(note || done, () => {
+      setState((st) => removeItems(st, ids));
+      for (const p of pushed) {
+        setState((st) => removeEventLocal(st, execId, p.id));
+        deleteEvent(p.calendarId, p.id).catch(() => toast("Couldn't remove the event. Delete it in Google Calendar."));
+      }
+    });
   };
 
   if (dismissed) return <p className="text-[13px] text-ink-2">Suggestions dismissed.</p>;
@@ -56,15 +97,15 @@ export function ActionCard({ message, execId, onApplied }: { message: ChatMessag
                   <span className="text-[15px] leading-snug">{d.detail}</span>
                 </span>
               </label>
-              <Detail action={a} applied={applied} />
+              <Detail action={a} applied={applied} eventNote={eventNote} />
             </li>
           );
         })}
       </ul>
       {!applied && (
         <div className="mt-3 flex gap-2">
-          <button type="button" disabled={!count} onClick={approve} className="h-11 flex-1 rounded-card bg-lime text-[15px] font-semibold disabled:bg-disabled disabled:text-disabled-ink">
-            Approve {count > 1 ? `all ${count}` : ''}
+          <button type="button" disabled={!count || busy} onClick={() => void approve()} className="h-11 flex-1 rounded-card bg-lime text-[15px] font-semibold disabled:bg-disabled disabled:text-disabled-ink">
+            {busy ? 'Adding to calendar…' : `Approve ${count > 1 ? `all ${count}` : ''}`}
           </button>
           <button type="button" onClick={() => setDismissed(true)} className="h-11 rounded-card border border-line px-4 text-[15px]">
             Not now
@@ -75,8 +116,16 @@ export function ActionCard({ message, execId, onApplied }: { message: ChatMessag
   );
 }
 
-function Detail({ action, applied }: { action: Action; applied: boolean }) {
+function Detail({ action, applied, eventNote }: { action: Action; applied: boolean; eventNote: string }) {
   const toast = useToast();
+  if (action.kind === 'add_event') {
+    return (
+      <div className="flex flex-col gap-1 pl-7 text-sm text-ink-2">
+        {action.notes && <p className="whitespace-pre-wrap">{action.notes}</p>}
+        {!applied && <p className="text-[13px] text-ink-3">{eventNote}</p>}
+      </div>
+    );
+  }
   if (action.kind === 'draft_message') {
     return (
       <div className="flex flex-col gap-2 pl-7">

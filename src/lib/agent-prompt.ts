@@ -10,6 +10,8 @@ export type AgentContext = {
   doneToday: string[];
   plan: string[];
   notesToRaise: string[];
+  /** The executive's Google calendar, when the assistant connected it. Null means no calendar is connected. */
+  calendar?: { name: string; canWrite: boolean; events: string[] } | null;
 };
 
 /* ---------- Tools the model may call. The server never executes them: the app shows them for approval. ---------- */
@@ -85,6 +87,18 @@ export const TOOLS = [
   {
     type: 'function',
     function: {
+      name: 'add_event',
+      description: "Propose an event on the executive's connected calendar. Only when the calendar is connected and editable; otherwise propose a reminder. Check the listed events for clashes first.",
+      parameters: {
+        type: 'object',
+        properties: { title: { type: 'string' }, start: dt, end: dt, location: { type: 'string', description: 'Place, or a meeting link if the assistant gave one' }, notes: { type: 'string' } },
+        required: ['title', 'start', 'end'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'remember_preference',
       description: 'Save something durable the assistant just said about how the executive likes things done.',
       parameters: { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] },
@@ -105,7 +119,9 @@ export function systemPrompt(c: AgentContext): string {
     '- Always write a short reply as well, even when you propose actions.',
     `- Times are the assistant's local time. Now is ${c.now} (${c.weekday}, ${c.timezone}). Use YYYY-MM-DDTHH:mm for date-times.`,
     '- Messages written as or to the executive follow their style. If you are unsure of a fact (a name, an amount, a date), leave a clear [placeholder] instead of guessing.',
-    '- You cannot read WhatsApp, email or calendars and you never send anything. Never say something was sent.',
+    c.calendar
+      ? `- You can see ${e.name}'s calendar "${c.calendar.name}" for today and tomorrow (listed below)${c.calendar.canWrite ? ' and can propose events on it with add_event' : '; it is read-only, so propose reminders instead of events'}. You cannot read WhatsApp or email, and you never send anything. Never say something was sent.`
+      : '- No calendar is connected, so you cannot see meetings unless the assistant tells you. Do not use add_event; propose a reminder instead. You cannot read WhatsApp or email, and you never send anything. Never say something was sent.',
     '- Be discreet, diplomatic and firm when the situation needs it. Never fabricate records: no fake receipts, padded expenses, forged letters or signatures, or false statements to auditors, banks or authorities. Decline that part in one sentence and offer an honest alternative.',
     '- Do not repeat back passwords, account numbers or anyone\'s health details.',
     '- If a wrong guess would be costly, ask one short question instead of acting.',
@@ -121,6 +137,7 @@ export function systemPrompt(c: AgentContext): string {
     c.doneToday.length ? `- Done today: ${c.doneToday.join('; ')}` : '',
     c.plan.length ? `- Today's plan: ${c.plan.join('; ')}` : '',
     c.notesToRaise.length ? `- Notes to raise with ${e.name}: ${c.notesToRaise.join('; ')}` : '',
+    c.calendar ? (c.calendar.events.length ? `- Calendar: ${c.calendar.events.join('; ')}` : '- Calendar: nothing booked today or tomorrow.') : '',
   ];
   return lines.filter((l) => l !== '').join('\n');
 }

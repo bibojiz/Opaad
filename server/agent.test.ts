@@ -54,6 +54,6 @@ describe('agent server', () => {
     expect(r.actions[0]).toMatchObject({ kind: 'add_reminder', remind_at: '2026-11-24T13:00' });
     expect(sent.models).toEqual(['a/primary', 'b/fallback']);
     expect(sent.provider).toEqual({ data_collection: 'deny' });
-    expect((sent.tools as unknown[]).length).toBe(7);
+    expect((sent.tools as unknown[]).length).toBe(8);
   });
 });

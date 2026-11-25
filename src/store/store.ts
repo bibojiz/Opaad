@@ -36,7 +36,8 @@ export async function loadState(): Promise<void> {
   try {
     const saved = await get<AppState>(KEY);
     if (saved && saved.version === 1) {
-      state = { ...initialState(), ...saved, settings: { ...initialState().settings, ...saved.settings } };
+      const base = initialState();
+      state = { ...base, ...saved, settings: { ...base.settings, ...saved.settings, google: { ...base.settings.google, ...(saved.settings?.google ?? {}) } }, events: saved.events ?? {} };
     }
   } catch {
     /* private mode or storage blocked: run in memory */

@@ -32,6 +32,10 @@ export const AgentRequestSchema = z.object({
     doneToday: z.array(z.string().max(200)).max(40),
     plan: z.array(z.string().max(160)).max(20),
     notesToRaise: z.array(z.string().max(200)).max(20),
+    calendar: z
+      .object({ name: z.string().max(80), canWrite: z.boolean(), events: z.array(z.string().max(200)).max(30) })
+      .nullable()
+      .optional(),
   }),
 });
 export type AgentRequest = z.infer<typeof AgentRequestSchema>;

@@ -52,7 +52,7 @@ export function Alerts() {
         ) : (
           <div className="pt-5"><Empty title="Nothing needs you right now" body="Overdue items, reminders coming up and tonight's report show here." /></div>
         )}
-        <p className="mt-6 rounded-card bg-subtle p-3 text-[13px] leading-relaxed text-ink-2">Opaad only alerts you about your own tasks and reports. It never reads {exec?.addressAs ?? 'your executive'}'s WhatsApp, email or calendar.</p>
+        <p className="mt-6 rounded-card bg-subtle p-3 text-[13px] leading-relaxed text-ink-2">Opaad only alerts you about your own tasks and reports. It never reads {exec?.addressAs ?? 'your executive'}'s WhatsApp or email, and reads a calendar only if you connect one.</p>
       </main>
     </div>
   );
