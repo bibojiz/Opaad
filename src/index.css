@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Braah One", ui-sans-serif, system-ui, sans-serif;
+
+  --color-page: #F3F5ED;
+  --color-surface: #FFFFFF;
+  --color-subtle: #F2F5F0;
+  --color-line: #DBDBDB;
+  --color-line-soft: #EEEEEE;
+  --color-ink: #141518;
+  --color-ink-2: #474747;
+  --color-ink-3: #6B6B6E;
+  --color-lime: #C6F24E;
+  --color-lime-ink: #3F6200;
+  --color-whatsapp: #2DAD4E;
+  --color-danger: #D92D20;
+  --color-danger-ink: #B42318;
+  --color-danger-soft: #FDECEA;
+  --color-disabled: #EEF0E8;
+  --color-disabled-ink: #6B6B6E;
+  --color-todo: #F4CD64;
+  --color-note: #CADE7F;
+  --color-reminder: #673CEB;
+
+  --radius-card: 12px;
+  --radius-field: 8px;
+
+  --duration-micro: 120ms;
+  --duration-standard: 220ms;
+  --duration-large: 320ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-page text-ink font-sans antialiased; }
+  :focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+  button { cursor: pointer; }
+  button:disabled { cursor: default; }
+  input::placeholder, textarea::placeholder { color: var(--color-ink-3); }
+}
+
+@keyframes row-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes flash { from { opacity: 0.6; } to { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.anim-row-in { animation: row-in var(--duration-standard) var(--ease-out) both; }
+.anim-flash { animation: flash 900ms var(--ease-out) both; }
+.anim-pop { animation: pop var(--duration-micro) var(--ease-out) both; }
+.anim-rise { animation: rise var(--duration-standard) var(--ease-out) both; }
+.anim-fade { animation: fade-in var(--duration-standard) var(--ease-out) both; }
+
+.t-std { transition: transform var(--duration-standard) var(--ease-out), opacity var(--duration-standard) var(--ease-out), visibility 0s; }
+.t-out { transition: transform 160ms var(--ease-in), opacity 160ms var(--ease-in), visibility 0s linear 160ms; }
+.t-large { transition: transform var(--duration-large) var(--ease-in-out), opacity var(--duration-standard) var(--ease-out), visibility 0s; }
+.t-large-out { transition: transform var(--duration-standard) var(--ease-in), opacity 180ms var(--ease-in), visibility 0s linear var(--duration-standard); }
+.t-micro { transition: transform var(--duration-micro) var(--ease-out), opacity var(--duration-micro) var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-row-in, .anim-pop, .anim-rise { animation: none; }
+  .anim-flash { animation-duration: 1ms; }
+  .t-std, .t-out, .t-large, .t-large-out { transition-property: opacity, visibility; }
+  .t-micro { transition: none; }
+}
+
+.sr-only-focusable:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
