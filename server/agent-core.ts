@@ -18,7 +18,7 @@ export const AgentRequestSchema = z.object({
       org: z.string().max(80),
       addressAs: z.string().max(60),
       pronoun: z.enum(['she', 'he', 'they']),
-      traits: z.array(z.string().max(60)).max(5),
+      traits: z.array(z.string().max(60)).max(10),
       samples: z.array(z.string().max(800)).max(3),
       learned: z.array(z.string().max(200)).max(30),
       neverSuggest: z.array(z.string().max(120)).max(20),

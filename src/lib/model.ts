@@ -6,7 +6,7 @@ export const TRAIT_GROUPS = [
   { id: 'works', name: 'How they work', items: ['Detail-oriented', 'Punctual', 'Early starter', 'Back-to-back meetings', 'Travels often', 'Protects family time', 'Changes plans often', 'Delegates a lot'] },
 ] as const;
 
-export const MAX_TRAITS = 5;
+export const MAX_TRAITS = 10;
 export const MAX_EXECUTIVES = 5;
 export const FREE_AI_REQUESTS = 3;
 
