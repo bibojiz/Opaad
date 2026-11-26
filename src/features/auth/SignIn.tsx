@@ -23,6 +23,15 @@ export function SignIn() {
   const [error, setError] = useState('');
   const [cooldown, setCooldown] = useState(0);
 
+  // A sign-in link that was already used or has expired comes back with an error in the address.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.slice(1) || window.location.search);
+    const code = params.get('error_code') || params.get('error');
+    if (!code) return;
+    setError(/expired|access_denied|otp/i.test(code) ? 'That sign-in link has expired or was already used. Enter your email to get a new code.' : 'That sign-in link didn\'t work. Enter your email to get a new code.');
+    window.history.replaceState(null, '', window.location.pathname);
+  }, []);
+
   useEffect(() => {
     if (!cooldown) return;
     const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
