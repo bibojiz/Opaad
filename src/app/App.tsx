@@ -10,7 +10,7 @@ import { Tasks } from '@/features/tasks/Tasks';
 import { notify } from '@/lib/device';
 import { parseLocal } from '@/lib/dates';
 import { IN_PREVIEW } from '@/lib/env';
-import { AUTH_ON } from '@/lib/supabase';
+import { AUTH_ON, DIRECT_ACCESS } from '@/lib/supabase';
 import { useSession } from '@/features/auth/session';
 import { SignIn } from '@/features/auth/SignIn';
 
@@ -19,7 +19,7 @@ type AskState = { open: boolean; initial?: { prompt?: string; send?: boolean; n:
 /** With accounts on, nothing past here renders until the person is signed in and their workspace is loaded. */
 function useAuthGate(): ReactElement | null {
   const session = useSession();
-  if (!AUTH_ON) return null;
+  if (!AUTH_ON && !DIRECT_ACCESS) return null;
   if (session.status === 'out') return <Navigate to="/signin" replace />;
   if (session.status !== 'in') return <SignIn />;
   return null;

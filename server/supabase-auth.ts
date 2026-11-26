@@ -12,7 +12,7 @@ export type AuthResult = { required: boolean; user?: { id: string }; token?: str
 /** Checks the caller's Supabase session token with Supabase itself. */
 export async function verifyUser(header: string | null, fetchImpl: typeof fetch = fetch): Promise<AuthResult> {
   const c = config();
-  if (!c) return { required: false };
+  if (!c || process.env.VITE_AUTH_MODE === 'direct') return { required: false };
   const token = header?.match(/^Bearer\s+(.+)$/i)?.[1];
   if (!token) return { required: true };
   try {

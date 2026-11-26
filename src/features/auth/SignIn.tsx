@@ -1,8 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
-import { GOOGLE_SIGNIN, supabase } from '@/lib/supabase';
+import { DIRECT_ACCESS, GOOGLE_SIGNIN, supabase } from '@/lib/supabase';
 import { OpaadMark, inputCls } from '@/components/ui';
-import { useSession } from './session';
+import { enterDirect, useSession } from './session';
 
 type Step = { kind: 'email' } | { kind: 'code'; email: string };
 
@@ -56,6 +56,8 @@ export function SignIn() {
     ev.preventDefault();
     const address = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return setError('Enter a full email address, like name@company.com.');
+    // Testing: email checks are switched off, so go straight in.
+    if (DIRECT_ACCESS) return enterDirect(address);
     void sendCode(address);
   };
 
@@ -110,7 +112,7 @@ export function SignIn() {
             </label>
             <input id="signin-email" type="email" inputMode="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" aria-describedby="signin-help" className={`${inputCls} h-12`} />
             <p id="signin-help" className="text-sm text-ink-2">
-              We'll email you a code. No password to remember.
+              {DIRECT_ACCESS ? "Testing: you'll go straight in, no code needed for now." : "We'll email you a code. No password to remember."}
             </p>
             <button type="submit" disabled={busy} className="mt-2 h-[52px] rounded-card bg-lime text-base font-semibold disabled:opacity-60">
               {busy ? 'Sending…' : 'Send me a code'}
