@@ -60,11 +60,11 @@ describe('store logic', () => {
     expect(ActionSchema.safeParse({ kind: 'send_email', to: 'boss' }).success).toBe(false);
   });
 
-  it('free plan allows three AI requests; own key lifts the limit', () => {
+  it('free plan allows five AI requests once the limit is on; own key lifts it', () => {
     const { s } = seeded();
-    expect(aiRequestsLeft(s, 3)).toBe(3);
-    expect(aiRequestsLeft({ ...s, usage: { aiRequests: 3, plan: 'free' } }, 3)).toBe(0);
-    expect(aiRequestsLeft({ ...s, settings: { ...s.settings, ownKey: 'k' } }, 3)).toBe(Infinity);
+    expect(aiRequestsLeft(s, 5)).toBe(5);
+    expect(aiRequestsLeft({ ...s, usage: { aiRequests: 5, plan: 'free' } }, 5)).toBe(0);
+    expect(aiRequestsLeft({ ...s, settings: { ...s.settings, ownKey: 'k' } }, 5)).toBe(Infinity);
   });
 });
 

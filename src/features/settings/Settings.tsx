@@ -51,7 +51,7 @@ export function Settings() {
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-semibold">Plan</h2>
           <p className="text-sm leading-relaxed text-ink-2">
-            {IN_PREVIEW ? 'Testing preview: AI requests are unlimited here, answered by Claude. The released app uses OpenRouter, with 3 free requests on the free plan.' : left === Infinity ? 'Unlimited AI requests.' : `Free plan: ${left} of ${FREE_AI_REQUESTS} AI requests left. Tasks, notes, reminders and reports are free without limits.`} The paid plan with unlimited AI is on the way.
+            {IN_PREVIEW ? 'Testing preview: AI requests are unlimited here, answered by Claude.' : left === Infinity ? 'Testing phase: AI requests are unlimited for everyone. After launch the free plan includes 5.' : `Free plan: ${left} of ${FREE_AI_REQUESTS} AI requests left. Tasks, notes, reminders and reports are free without limits.`} The paid plan with unlimited AI is on the way.
           </p>
           {!IN_PREVIEW && <details className="rounded-card border border-line p-3">
             <summary className="cursor-pointer text-sm font-medium">Testing Opaad? Use your own OpenRouter key</summary>

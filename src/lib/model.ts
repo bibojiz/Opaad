@@ -8,7 +8,7 @@ export const TRAIT_GROUPS = [
 
 export const MAX_TRAITS = 10;
 export const MAX_EXECUTIVES = 5;
-export const FREE_AI_REQUESTS = 3;
+export const FREE_AI_REQUESTS = 5;
 
 export const PronounSchema = z.enum(['she', 'he', 'they']);
 export type Pronoun = z.infer<typeof PronounSchema>;

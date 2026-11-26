@@ -9,5 +9,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   build: { target: 'es2022', sourcemap: false, outDir: mode === 'artifact' ? 'dist-artifact' : 'dist' },
-  test: { environment: 'node', include: ['src/**/*.test.ts', 'server/**/*.test.ts'] },
+  test: {
+    env: { VITE_AI_FREE_LIMIT: 'on' }, environment: 'node', include: ['src/**/*.test.ts', 'server/**/*.test.ts'] },
 }));
