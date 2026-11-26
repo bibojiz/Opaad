@@ -111,8 +111,22 @@ function OnboardingGate() {
   );
 }
 
+const AdminPage = lazy(() => import('@/features/admin/Admin').then((m) => ({ default: m.Admin })));
+
+function AdminGate() {
+  const gate = useAuthGate();
+  if (!AUTH_ON) return <Navigate to="/" replace />;
+  if (gate) return gate;
+  return (
+    <Suspense fallback={null}>
+      <AdminPage />
+    </Suspense>
+  );
+}
+
 const routes = [
   { path: '/signin', element: <SignIn /> },
+  { path: '/admin', element: <AdminGate /> },
   { path: '/welcome', element: <OnboardingGate /> },
   {
     path: '/',

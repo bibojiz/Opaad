@@ -6,6 +6,7 @@ import { useApp } from '@/store/store';
 import { activeExec, aiRequestsLeft } from '@/store/logic';
 import { deriveAlerts } from '@/lib/alerts';
 import { FREE_AI_REQUESTS } from '@/lib/model';
+import { FeedbackButton } from '@/features/feedback/FeedbackButton';
 
 type AskOpts = { prompt?: string; send?: boolean };
 type Shell = { navOpen: boolean; setNavOpen: (v: boolean) => void; collapsed: boolean; toggleCollapsed: () => void; openAsk: (o?: AskOpts) => void };
@@ -105,6 +106,7 @@ function SidebarBody({ rail, onClose }: { rail?: boolean; onClose?: () => void }
       )}
       <NavList rail={rail} onNavigate={onClose} />
       <div className="flex-1" />
+      <FeedbackButton rail={rail} />
       {!rail && left !== Infinity && (
         <div className="flex flex-col gap-2 rounded-card border border-line bg-subtle p-3">
           <div className="flex items-baseline justify-between text-sm">
