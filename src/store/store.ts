@@ -23,6 +23,15 @@ export function setState(updater: (s: AppState) => AppState): void {
   }, 150);
 }
 
+/** Swaps in a whole state (from the cloud). Listeners run, so the UI updates; the sync engine ignores its own swaps. */
+export function replaceState(next: AppState): void {
+  setState(() => next);
+}
+
+export function subscribeState(l: () => void): () => void {
+  return subscribe(l);
+}
+
 function subscribe(l: () => void): () => void {
   listeners.add(l);
   return () => listeners.delete(l);

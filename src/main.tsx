@@ -4,9 +4,11 @@ import './index.css';
 import { App } from './app/App';
 import { loadState } from './store/store';
 import { IN_PREVIEW } from './lib/env';
+import { initSession } from './features/auth/session';
 
 async function start() {
   await loadState();
+  initSession();
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />

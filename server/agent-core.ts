@@ -40,7 +40,8 @@ export const AgentRequestSchema = z.object({
 });
 export type AgentRequest = z.infer<typeof AgentRequestSchema>;
 
-export type OpenRouterResult = { reply: string; actions: Action[]; model?: string; dropped: number };
+export type Usage = { prompt: number; completion: number; cost: number };
+export type OpenRouterResult = { reply: string; actions: Action[]; model?: string; dropped: number; usage?: Usage };
 
 export async function callOpenRouter(req: AgentRequest, opts: { apiKey: string; model: string; fallbackModel?: string; referer: string; fetchImpl?: typeof fetch }): Promise<OpenRouterResult> {
   const f = opts.fetchImpl ?? fetch;
@@ -61,17 +62,20 @@ export async function callOpenRouter(req: AgentRequest, opts: { apiKey: string; 
       temperature: 0.3,
       max_tokens: 1400,
       provider: { data_collection: 'deny' },
+      usage: { include: true },
     }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new UpstreamError(res.status, text.slice(0, 300));
   }
-  const data = (await res.json()) as { model?: string; choices?: { message?: { content?: string | null; tool_calls?: ToolCall[] } }[] };
+  const data = (await res.json()) as { model?: string; usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number }; choices?: { message?: { content?: string | null; tool_calls?: ToolCall[] } }[] };
   const msg = data.choices?.[0]?.message;
   const { actions, dropped } = toActions(msg?.tool_calls);
   const reply = (msg?.content ?? '').trim() || fallbackReply(actions);
-  return { reply, actions, model: data.model, dropped };
+  const u = data.usage;
+  const usage = u ? { prompt: u.prompt_tokens ?? 0, completion: u.completion_tokens ?? 0, cost: u.cost ?? 0 } : undefined;
+  return { reply, actions, model: data.model, dropped, usage };
 }
 
 export class UpstreamError extends Error {

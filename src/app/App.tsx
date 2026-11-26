@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState, type CSSProperties } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, type CSSProperties, type ReactElement } from 'react';
 import { createBrowserRouter, createMemoryRouter, Navigate, Outlet, RouterProvider, useLocation } from 'react-router-dom';
 import { getState, setState, useApp } from '@/store/store';
 import { updateItem } from '@/store/logic';
@@ -10,10 +10,23 @@ import { Tasks } from '@/features/tasks/Tasks';
 import { notify } from '@/lib/device';
 import { parseLocal } from '@/lib/dates';
 import { IN_PREVIEW } from '@/lib/env';
+import { AUTH_ON } from '@/lib/supabase';
+import { useSession } from '@/features/auth/session';
+import { SignIn } from '@/features/auth/SignIn';
 
 type AskState = { open: boolean; initial?: { prompt?: string; send?: boolean; n: number } };
 
+/** With accounts on, nothing past here renders until the person is signed in and their workspace is loaded. */
+function useAuthGate(): ReactElement | null {
+  const session = useSession();
+  if (!AUTH_ON) return null;
+  if (session.status === 'out') return <Navigate to="/signin" replace />;
+  if (session.status !== 'in') return <SignIn />;
+  return null;
+}
+
 function Layout() {
+  const gate = useAuthGate();
   const s = useApp();
   const loc = useLocation();
   const [ask, setAsk] = useState<AskState>({ open: false });
@@ -34,6 +47,7 @@ function Layout() {
   }, []);
   useEffect(() => setAsk((a) => (a.open ? { ...a, open: false } : a)), [loc.pathname]);
 
+  if (gate) return gate;
   if (!s.profile.onboarded || !s.executives.length) return <Navigate to="/welcome" replace />;
   return (
     <ShellProvider openAsk={openAsk}>
@@ -86,7 +100,9 @@ function ReminderWatcher() {
 const Onboarding = lazy(() => import('@/features/onboarding/Onboarding').then((m) => ({ default: m.Onboarding })));
 
 function OnboardingGate() {
+  const gate = useAuthGate();
   const s = useApp();
+  if (gate) return gate;
   if (s.profile.onboarded && s.executives.length) return <Navigate to="/" replace />;
   return (
     <Suspense fallback={null}>
@@ -96,6 +112,7 @@ function OnboardingGate() {
 }
 
 const routes = [
+  { path: '/signin', element: <SignIn /> },
   { path: '/welcome', element: <OnboardingGate /> },
   {
     path: '/',

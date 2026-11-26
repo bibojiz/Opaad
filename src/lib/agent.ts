@@ -1,6 +1,7 @@
 import { ActionSchema, AgentResponseSchema, type Action, type AppState, type ChatMessage, type Executive } from './model';
 import { dueLabel, formatTime, isOverdue, isToday, parseLocal, todayKey, toLocalDateTime } from './dates';
 import { IN_PREVIEW } from './env';
+import { accessToken } from './supabase';
 import { calendarFor } from '@/store/logic';
 import { TOOLS, fallbackReply, systemPrompt, type AgentContext } from './agent-prompt';
 
@@ -67,9 +68,10 @@ export async function askAgent(history: ChatMessage[], s: AppState, exec: Execut
   if (IN_PREVIEW) return askViaClaude(messages, buildContext(s, exec), signal);
   let res: Response;
   try {
+    const token = await accessToken();
     res = await fetch('/api/agent', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(s.settings.ownKey ? { 'x-openrouter-key': s.settings.ownKey } : {}) },
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(s.settings.ownKey ? { 'x-openrouter-key': s.settings.ownKey } : {}) },
       body: JSON.stringify({ messages, context: buildContext(s, exec) }),
       signal,
     });

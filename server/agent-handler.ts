@@ -1,4 +1,5 @@
 import { AgentRequestSchema, UpstreamError, callOpenRouter } from './agent-core';
+import { recordUsage, verifyUser } from './supabase-auth';
 
 const MAX_BODY = 60_000;
 
@@ -16,6 +17,10 @@ export async function POST(request: Request): Promise<Response> {
   } catch {
     return json({ error: 'bad_request', message: 'The request was not valid.' }, 400);
   }
+  // With accounts switched on, only signed-in people can use the AI.
+  const auth = await verifyUser(request.headers.get('authorization'));
+  if (auth.required && !auth.user) return json({ error: 'signed_out', message: 'Your session ended. Sign in again to ask Opaad.' }, 401);
+
   const parsed = AgentRequestSchema.safeParse(body);
   if (!parsed.success) return json({ error: 'bad_request', message: 'The request was not valid.' }, 400);
 
@@ -32,7 +37,9 @@ export async function POST(request: Request): Promise<Response> {
       fallbackModel: process.env.OPENROUTER_FALLBACK_MODEL || 'deepseek/deepseek-v4.1-flash-1017',
       referer: process.env.PUBLIC_SITE_URL || new URL(request.url).origin,
     });
-    return json(result);
+    if (auth.user && auth.token && !ownKey) await recordUsage(auth.token, result.model ?? '', result.usage);
+    const { usage: _usage, ...reply } = result;
+    return json(reply);
   } catch (err) {
     if (err instanceof UpstreamError) {
       const status = err.status === 401 || err.status === 403 ? 502 : err.status === 429 ? 429 : 502;

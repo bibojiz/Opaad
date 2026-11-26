@@ -8,6 +8,8 @@ import { Button, Field, inputCls } from '@/components/ui';
 import { Sheet, useToast } from '@/components/overlays';
 import { FREE_AI_REQUESTS } from '@/lib/model';
 import { notificationSupport, requestNotifications } from '@/lib/device';
+import { AUTH_ON } from '@/lib/supabase';
+import { AccountSettings } from '@/features/auth/AccountSettings';
 import { CalendarSettings } from '@/features/calendar/CalendarSettings';
 
 export function Settings() {
@@ -32,6 +34,8 @@ export function Settings() {
     <div className="flex min-h-dvh flex-col">
       <PageHeader title="Settings" subtitle={s.profile.name} />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-7 border-t border-line bg-surface px-4 py-5 lg:rounded-card lg:border lg:px-6">
+        <AccountSettings />
+
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-semibold">You</h2>
           <Field label="First name"><input className={inputCls} value={s.profile.name} onChange={(e) => setState((st) => ({ ...st, profile: { ...st.profile, name: e.target.value } }))} /></Field>
@@ -65,7 +69,7 @@ export function Settings() {
 
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-semibold">Your data</h2>
-          <p className="text-sm leading-relaxed text-ink-2">Everything is stored in this browser on this device. Opaad keeps no copy. Clearing your browser data deletes it, so export a copy now and then. When you ask Opaad something, your open items and any calendar events go with the question to the AI model, routed only to providers that don't store or train on your data.</p>
+          <p className="text-sm leading-relaxed text-ink-2">{AUTH_ON ? 'Your executives, tasks, notes, reports and chats are stored in your account, so they follow you to any device where you sign in. Only you can open them. Attached files stay on the device you added them on.' : 'Everything is stored in this browser on this device. Opaad keeps no copy. Clearing your browser data deletes it, so export a copy now and then.'} When you ask Opaad something, your open items and any calendar events go with the question to the AI model, routed only to providers that don't store or train on your data.</p>
           <div className="flex flex-wrap gap-2">
             {!IN_PREVIEW && <Button variant="secondary" onClick={download}>Export a copy</Button>}
             <Button variant="danger" onClick={() => setWipe(true)}>Delete all data</Button>
@@ -76,7 +80,7 @@ export function Settings() {
       </main>
 
       <Sheet open={wipe} onClose={() => setWipe(false)} title="Delete everything?">
-        <p className="mb-4 text-[15px] leading-relaxed text-ink-2">Every executive, task, note, reminder, report, chat and attached file on this device is deleted. This can't be undone.</p>
+        <p className="mb-4 text-[15px] leading-relaxed text-ink-2">{AUTH_ON ? 'Every executive, task, note, reminder, report and chat is deleted from your account and this device. This can\'t be undone.' : 'Every executive, task, note, reminder, report, chat and attached file on this device is deleted. This can\'t be undone.'}</p>
         <div className="flex gap-2">
           <Button variant="danger" className="flex-1" onClick={async () => { await wipeAll(); setWipe(false); nav('/welcome', { replace: true }); }}>Delete everything</Button>
           <Button variant="secondary" className="flex-1" onClick={() => setWipe(false)}>Cancel</Button>
